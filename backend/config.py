@@ -25,7 +25,10 @@ PINECONE_ENVIRONMENT: str = os.getenv("PINECONE_ENVIRONMENT", "us-east-1")
 # --- Gemini Configuration ---
 GEMINI_LLM_MODEL: str       = os.getenv("GEMINI_LLM_MODEL", "gemini-2.5-flash")
 GEMINI_EMBEDDING_MODEL: str = os.getenv("GEMINI_EMBEDDING_MODEL", "models/gemini-embedding-001")
-EMBEDDING_DIMENSION: int    = int(os.getenv("EMBEDDING_DIMENSION", "768"))
+
+# --- Hugging Face Configuration ---
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5")
+EMBEDDING_DIMENSION: int    = int(os.getenv("EMBEDDING_DIMENSION", "384"))
 
 # --- OpenAI Models Configuration (Optional/Backup) ---
 OPENAI_LLM_MODEL: str       = os.getenv("OPENAI_LLM_MODEL", "gpt-4o")

@@ -5,15 +5,15 @@ from typing import List, Optional
 
 from langchain.schema import Document
 # Swapped OpenAIEmbeddings for GoogleGenerativeAIEmbeddings
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+# from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from pinecone import Pinecone, ServerlessSpec
 from tqdm import tqdm
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from config import (
-    GOOGLE_API_KEY,          # Swapped from OPENAI_API_KEY
-    GEMINI_EMBEDDING_MODEL,
+    EMBEDDING_MODEL,
     PINECONE_API_KEY,
     PINECONE_INDEX_NAME,
     PINECONE_ENVIRONMENT,
@@ -27,10 +27,14 @@ log = get_logger(__name__)
 
 BATCH_SIZE = 100
 
-def get_embeddings() -> GoogleGenerativeAIEmbeddings:
-    return GoogleGenerativeAIEmbeddings(
-        model=GEMINI_EMBEDDING_MODEL,
-        google_api_key=GOOGLE_API_KEY
+def get_embeddings():
+    return HuggingFaceEmbeddings(
+        model_name=EMBEDDING_MODEL,
+        model_kwargs={"device": "cpu"},
+        encode_kwargs={
+            "normalize_embeddings": True,
+            "batch_size": 64,
+        },
     )
 
 def get_pinecone_client():
@@ -77,7 +81,6 @@ def upsert_documents(chunks: List[Document]) -> PineconeVectorStore:
         except Exception as e:
             log.error(f"Batch {i+1} failed: {e}")
             raise
-        time.sleep(0.3)
         
     log.info(f"✅ Done - {len(chunks)} chunks stored in Pinecone")
     return vectorstore

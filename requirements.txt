@@ -1,27 +1,47 @@
 # LangChain Ecosystem
-langchain==0.3.25
-langchain-openai==0.3.16
+langchain==0.3.27
+langchain-core==0.3.75
+langchain-community==0.3.27
+langchain-openai==0.3.28
 langchain-pinecone==0.2.13
-langchain-community==0.3.24
-langchain-google-genai==2.0.7
+langchain-google-genai==2.1.12
 
-# Model APIs & Clients
-openai==1.82.0
+# Google Gemini
+google-generativeai==0.8.5
+
+# OpenAI
+openai==1.107.2
+
+# Pinecone
 pinecone-client==4.1.0
-google-genai==2.10.0
 
 # Database & Authentication
 supabase==2.15.1
 PyJWT==2.10.1
 bcrypt==4.3.0
 
-# Framework & Utilities
+# Flask
 flask==3.0.3
 flask-cors==5.0.0
+
+# Environment Variables
 python-dotenv==1.0.1
+
+# PDF Processing
 pypdf==4.3.1
+
+# Tokenizer
 tiktoken==0.9.0
-tqdm==4.66.5
+
+# Progress Bars
+tqdm==4.67.1
+
+# Logging
 colorlog==6.8.2
+
+
+# Retry Utilities
 tenacity==8.5.0
+
+# Testing
 pytest==8.3.3

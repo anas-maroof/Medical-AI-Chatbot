@@ -13,21 +13,23 @@ def _require(key: str) -> str:
     return val
 
 # --- Required API Keys ---
-OPENAI_API_KEY: str   = _require("OPENAI_API_KEY")
 PINECONE_API_KEY: str = _require("PINECONE_API_KEY")
 GOOGLE_API_KEY: str   = _require("GOOGLE_API_KEY")
+# Note: You can remove or keep OPENAI_API_KEY depending on whether you'll use it later
+OPENAI_API_KEY: str   = os.getenv("OPENAI_API_KEY", "")
 
 # --- Pinecone Configuration ---
-PINECONE_INDEX_NAME: str  = os.getenv("PINECONE_INDEX_NAME", "medbot-gale")
+PINECONE_INDEX_NAME: str  = os.getenv("PINECONE_INDEX_NAME", "medical-chatbot")
 PINECONE_ENVIRONMENT: str = os.getenv("PINECONE_ENVIRONMENT", "us-east-1")
-
-# --- OpenAI Models Configuration ---
-OPENAI_LLM_MODEL: str       = os.getenv("OPENAI_LLM_MODEL", "gpt-4o")
-OPENAI_EMBEDDING_MODEL: str = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
-EMBEDDING_DIMENSION: int    = int(os.getenv("EMBEDDING_DIMENSION", "1536"))
 
 # --- Gemini Configuration ---
 GEMINI_LLM_MODEL: str       = os.getenv("GEMINI_LLM_MODEL", "gemini-2.5-flash")
+GEMINI_EMBEDDING_MODEL: str = os.getenv("GEMINI_EMBEDDING_MODEL", "models/gemini-embedding-001")
+EMBEDDING_DIMENSION: int    = int(os.getenv("EMBEDDING_DIMENSION", "768"))
+
+# --- OpenAI Models Configuration (Optional/Backup) ---
+OPENAI_LLM_MODEL: str       = os.getenv("OPENAI_LLM_MODEL", "gpt-4o")
+OPENAI_EMBEDDING_MODEL: str = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
 
 # --- Text Chunking Configuration ---
 CHUNK_SIZE: int    = int(os.getenv("CHUNK_SIZE", "800"))
@@ -57,4 +59,5 @@ SUPABASE_URL: str         = _require("SUPABASE_URL")
 SUPABASE_SERVICE_KEY: str = _require("SUPABASE_SERVICE_KEY")
 SUPABASE_ANON_KEY: str    = os.getenv("SUPABASE_ANON_KEY", "")
 JWT_SECRET: str           = _require("JWT_SECRET")
-JWT_EXPIRY_HOURS: int     = int(os.getenv("JWT_EXPIRY_HOURS", "24"))
+raw_expiry = os.getenv("JWT_EXPIRY_HOURS", "24")
+JWT_EXPIRY_HOURS: int     = int(raw_expiry) if raw_expiry.strip() else 24

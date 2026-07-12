@@ -22,3 +22,6 @@ dist/
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Data Source
+data/

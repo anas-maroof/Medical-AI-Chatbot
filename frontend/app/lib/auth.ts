@@ -1,7 +1,7 @@
 import Cookies from "js-cookie";
 
-const TOKEN_KEY = "medical_chatbot_token";
-const USER_KEY = "medical_chatbot_user";
+const TOKEN_KEY = "medbot_token";
+const USER_KEY = "medbot_user";
 
 export interface User {
     id: string;

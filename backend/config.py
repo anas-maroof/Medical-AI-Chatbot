@@ -23,7 +23,7 @@ PINECONE_INDEX_NAME: str  = os.getenv("PINECONE_INDEX_NAME", "medical-chatbot")
 PINECONE_ENVIRONMENT: str = os.getenv("PINECONE_ENVIRONMENT", "us-east-1")
 
 # --- Gemini Configuration ---
-GEMINI_LLM_MODEL: str       = os.getenv("GEMINI_LLM_MODEL", "gemini-2.5-flash")
+GEMINI_LLM_MODEL: str       = os.getenv("GEMINI_LLM_MODEL", "gemini-3.5-flash")
 GEMINI_EMBEDDING_MODEL: str = os.getenv("GEMINI_EMBEDDING_MODEL", "models/gemini-embedding-001")
 
 # --- Hugging Face Configuration ---
@@ -54,7 +54,7 @@ DATA_DIR.mkdir(exist_ok=True)
 
 # --- LLM Hyperparameters ---
 RETRIEVER_TOP_K: int     = int(os.getenv("RETRIEVER_TOP_K", "5"))
-MAX_TOKENS_RESPONSE: int = int(os.getenv("MAX_TOKENS_RESPONSE", "1024"))
+MAX_TOKENS_RESPONSE: int = int(os.getenv("MAX_TOKENS_RESPONSE", "2048"))
 LLM_TEMPERATURE: float   = float(os.getenv("LLM_TEMPERATURE", "0.3"))
 
 # --- Supabase & Authentication ---

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 import { apiRegister } from "../lib/api";
+import { saveAuth } from "../lib/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -31,6 +32,8 @@ export default function RegisterPage() {
         setError(res.error || "Registration failed");
         return;
       }
+      saveAuth(res.token, res.user);
+      router.push("/");
     } catch {
       setError("Something went wrong. Try again");
     } finally {

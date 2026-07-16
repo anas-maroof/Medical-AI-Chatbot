@@ -92,7 +92,7 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full mt-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-xl transition-all text-sm"
             >
-              {loading ? "Creating account..." : "Create account"}
+              {loading ? "Signing In..." : "Sign In"}
             </button>
 
             <p className="text-slate-300 text-sm text-center pt-1">

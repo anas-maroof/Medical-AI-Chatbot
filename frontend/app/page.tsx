@@ -13,13 +13,13 @@ import {
   Session,
 } from "./lib/api";
 import { getUser, isLoggedIn, logout } from "./lib/auth";
+import TypingIndicator from "./components/TypingIndicator";
+import Message from "./components/Message";
 
 const SUGGESTED_QUESTIONS = [
   "What are the symptoms of malaria?",
   "How is hypertension diagnosed and treated?",
   "What is the difference between Type 1 and Type 2 diabetes?",
-  "What are the causes and treatment of kidney failure?",
-  "What is myocardial infarction and how is it treated?",
 ];
 
 export default function Home() {
@@ -83,6 +83,8 @@ export default function Home() {
     logout();
     router.push("/login");
   };
+
+  const showWelcome = messages.length === 0;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -179,7 +181,58 @@ export default function Home() {
           </div>
         </header>
 
-        <main></main>
+        <main className="flex-1 overflow-y-auto px-4 py-6">
+          <div className="max-w-3xl mx-auto space-y-6">
+            {showWelcome && (
+              <div className="flex flex-col items-center justify-center min-h-[60vh] gap-8">
+                <div className="text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">
+                    M
+                  </div>
+                  <h2 className="text-2xl font-semibold text-white mb-2">
+                    Hello, {user?.full_name?.split(" ")[0]} 👋
+                  </h2>
+                </div>
+
+                <div className="w-full max-w-xl">
+                  <p className="text-xs text-slate-400 text-center mb-3">
+                    Suggested Questions
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {SUGGESTED_QUESTIONS?.map((q, i) => (
+                      <button
+                        key={i}
+                        className="text-left px-4 py-3 rounded-xl bg-[#111827] border border-[#1e3a5f] hover:border-blue-500 hover:bg-[#0d1b2e] text-slate-300 hover:text-white text-sm transition-all"
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {messages?.map((msg, id) => {
+              const isLastMessage = id == messages.length - 1;
+              const isEmptyBot =
+                isLastMessage &&
+                msg.role == "bot" &&
+                msg.content === "" &&
+                loading;
+              if (isEmptyBot) return <TypingIndicator key={id} />;
+
+              return (
+                <Message
+                  key={id}
+                  role={msg.role}
+                  content={msg.content}
+                  sources={msg.sources}
+                  duration_ms={msg.duration_ms}
+                />
+              );
+            })}
+          </div>
+        </main>
 
         <footer className="w-full p-4 border-t border-[#1e3a5f] bg-[#0d1b2e]">
           <div className="max-w-4xl mx-auto flex flex-col gap-2">

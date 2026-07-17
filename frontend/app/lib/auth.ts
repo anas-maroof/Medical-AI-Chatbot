@@ -29,7 +29,7 @@ export function getUser(): User | null {
 }
 
 export function isLoggedIn(): boolean {
-    return !getToken();
+    return !!getToken();
 }
 
 export function logout(): void {

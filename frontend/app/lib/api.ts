@@ -87,3 +87,14 @@ export async function fetchMessages(sessionId: string): Promise<ChatMessage[]> {
         duration_ms: m.duration_ms,
     }));
 }
+
+export async function checkHealth(): Promise<boolean> {
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/health`);
+        const data = await res.json();
+        return data.ready === true;
+    } catch {
+        return false;
+    }
+}
+

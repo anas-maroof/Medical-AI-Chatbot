@@ -24,6 +24,7 @@ export default function LoginPage() {
       const res = await apiLogin(email, password);
       if (!res.success) {
         setError(res.error);
+        return;
       }
       saveAuth(res.token, res.user);
       router.push("/");

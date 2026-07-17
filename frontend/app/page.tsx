@@ -12,7 +12,7 @@ import {
   fetchSession,
   Session,
 } from "./lib/api";
-import { getUser, isLoggedIn } from "./lib/auth";
+import { getUser, isLoggedIn, logout } from "./lib/auth";
 
 const SUGGESTED_QUESTIONS = [
   "What are the symptoms of malaria?",
@@ -70,6 +70,18 @@ export default function Home() {
       setActiveSession(null);
       setMessages([]);
     }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      // handleSend();
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
   };
 
   useEffect(() => {
@@ -167,11 +179,48 @@ export default function Home() {
           </div>
         </header>
 
-        <main>
+        <main></main>
 
-        </main>
+        <footer className="w-full p-4 border-t border-[#1e3a5f] bg-[#0d1b2e]">
+          <div className="max-w-4xl mx-auto flex flex-col gap-2">
+            {/* This container aligns the textarea and the button side-by-side */}
+            <div className="flex items-end gap-2 bg-[#111827] border border-[#1e3a5f] rounded-xl p-2">
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask a medical question... (Enter to send)"
+                rows={1}
+                className="flex-1 bg-transparent text-slate-200 placeholder-slate-500 text-sm resize-none outline-none max-h-32 leading-relaxed py-1 px-2"
+                onInput={(e) => {
+                  const t = e.target as HTMLTextAreaElement;
+                  t.style.height = "auto";
+                  t.style.height = t.scrollHeight + "px";
+                }}
+              />
+              <button
+                // onClick={handleSend} // Don't forget to attach your click handler here too!
+                disabled={!input.trim() || loading}
+                className="w-8 h-8 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:cursor-not-allowed flex items-center justify-center shrink-0 transition-all"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="w-4 h-4 text-white"
+                >
+                  <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+                </svg>
+              </button>
+            </div>
 
-        
+            {/* The disclaimer text stays neatly centered underneath the input box */}
+            <p className="text-center text-xs text-slate-500 mt-1">
+              Medbot can make mistakes. Always verify with clinical judgement
+            </p>
+          </div>
+        </footer>
       </div>
     </div>
   );

@@ -23,7 +23,7 @@ def create_session(user_id:str, title:str="New Chat") -> dict:
     log.info(f"Session created: {session['id']} for user {user_id}")
     return session
 
-def get_session(user_id:str) -> List[dict]:
+def get_sessions(user_id:str) -> List[dict]:
     result = supabase.table("chat_sessions") \
         .select("*") \
         .eq("user_id",user_id) \

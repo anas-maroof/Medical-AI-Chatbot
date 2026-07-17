@@ -14,6 +14,10 @@ from src.rag_chain import build_rag_chain, build_streaming_chain, PROMPT
 from src.vectorstore import load_vectorstore, get_retriever
 from src.auth import register_user, login_user, verify_token
 from src.logger import get_logger
+from src.chat_store import (
+    create_session, get_sessions, update_session_title,
+    delete_session, save_messages, get_messages
+)
 
 log = get_logger(__name__)
 
@@ -100,6 +104,32 @@ def create_app():
             "user_id": request.user_id,
             "email": request.user_email,
         })
+    
+    @app.route("/api/sessions", methods=["GET"])
+    @require_auth
+    def list_sessions():
+        sessions = get_sessions(request.user_id)
+        return jsonify({"sessions": sessions})
+    
+    @app.route("/api/sessions", methods=["POST"])
+    @require_auth
+    def new_session():
+        data = request.get_json(silent=True) or {}
+        title = data.get("title", "New Chat")
+        session = create_session(request.user_id, title)
+        return jsonify(session), 201
+    
+    @app.route("/api/sessions/<session_id>", methods=["DELETE"])
+    @require_auth
+    def remove_session(session_id):
+        delete_session(session_id, request.user_id)
+        return jsonify({"success": True})
+    
+    @app.route("/api/sessions/<session_id>/messages", methods=["GET"])
+    @require_auth
+    def list_messages(session_id):
+        messages = get_messages(session_id)
+        return jsonify({"messages": messages})
 
     @app.errorhandler(404)
     def not_found(e):

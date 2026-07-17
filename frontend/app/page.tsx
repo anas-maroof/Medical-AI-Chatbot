@@ -7,10 +7,12 @@ import { useEffect, useRef, useState } from "react";
 import {
   ChatMessage,
   checkHealth,
+  createSession,
   deleteSession,
   fetchMessages,
   fetchSession,
   Session,
+  streamMessage,
 } from "./lib/api";
 import { getUser, isLoggedIn, logout } from "./lib/auth";
 import TypingIndicator from "./components/TypingIndicator";
@@ -75,13 +77,90 @@ export default function Home() {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      // handleSend();
+      handleSend();
     }
   };
 
   const handleLogout = () => {
     logout();
     router.push("/login");
+  };
+
+  const handleSend = async (question?: string) => {
+    const q = (question || input).trim();
+    if (!q || loading) return;
+
+    let session = activeSession;
+    if (!session) {
+      session = await createSession("New Chat");
+      setSessions((prev) => [session!, ...prev]);
+      setActiveSession(session);
+    }
+
+    setMessages((prev) => [...prev, { role: "user", content: q }]);
+    setInput("");
+    setLoading(true);
+    setMessages((prev) => [...prev, { role: "bot", content: "" }]);
+
+    const startTime = Date.now();
+
+    await streamMessage(
+      q,
+      session.id,
+      (token) => {
+        setMessages((prev) => {
+          const updated = [...prev];
+          const last = updated[updated.length - 1];
+          if (last.role === "bot") {
+            updated[updated.length - 1] = {
+              ...last,
+              content: last.content + token,
+            };
+          }
+          return updated;
+        });
+      },
+      (sources) => {
+        setMessages((prev) => {
+          const updated = [...prev];
+          const last = updated[updated.length - 1];
+          if (last.role === "bot") {
+            updated[updated.length - 1] = {
+              ...last,
+              sources,
+              duration_ms: Date.now() - startTime,
+            };
+          }
+          return updated;
+        });
+
+        // Refresh sessions to update titles
+        loadSessions();
+      },
+      () => {
+        setLoading(false);
+        inputRef.current?.focus();
+      },
+      (err) => {
+        setMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = {
+            role: "bot",
+            content: `❌ Error: ${err}`,
+          };
+          return updated;
+        });
+        setLoading(false);
+      },
+    );
+  };
+
+  const handleNewChat = async () => {
+    const session = await createSession("New Chat");
+    setSessions((prev) => [session, ...prev]);
+    setActiveSession(session);
+    setMessages([]);
+    inputRef?.current?.focus();
   };
 
   const showWelcome = messages.length === 0;
@@ -101,7 +180,10 @@ export default function Home() {
               </div>
               <span className="text-white font-semibold text-sm">MedBot</span>
             </div>
-            <button className="w-full bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium py-2 px-3 rounded-xl transition-all flex items-center gap-2">
+            <button
+              onClick={handleNewChat}
+              className="w-full bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium py-2 px-3 rounded-xl transition-all flex items-center gap-2"
+            >
               <span className="text-lg leading-none">+</span>
               New Chat
             </button>
@@ -178,6 +260,12 @@ export default function Home() {
                     : "Offline"}
               </span>
             </div>
+            <button
+              onClick={handleLogout}
+              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-500 active:scale-95"
+            >
+              Logout
+            </button>
           </div>
         </header>
 
@@ -201,6 +289,7 @@ export default function Home() {
                   <div className="flex flex-col gap-2">
                     {SUGGESTED_QUESTIONS?.map((q, i) => (
                       <button
+                        onClick={() => handleSend(q)}
                         key={i}
                         className="text-left px-4 py-3 rounded-xl bg-[#111827] border border-[#1e3a5f] hover:border-blue-500 hover:bg-[#0d1b2e] text-slate-300 hover:text-white text-sm transition-all"
                       >
@@ -253,15 +342,18 @@ export default function Home() {
                 }}
               />
               <button
-                // onClick={handleSend} // Don't forget to attach your click handler here too!
+                type="button"
+                onClick={() => handleSend()}
                 disabled={!input.trim() || loading}
-                className="w-8 h-8 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:cursor-not-allowed flex items-center justify-center shrink-0 transition-all"
+                aria-label="Send message"
+                title={loading ? "Generating answer..." : "Send"}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-600 transition-all hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-slate-700"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
                   fill="currentColor"
-                  className="w-4 h-4 text-white"
+                  className="h-4 w-4 text-white"
                 >
                   <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
                 </svg>

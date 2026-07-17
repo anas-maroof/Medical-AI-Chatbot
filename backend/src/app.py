@@ -19,6 +19,14 @@ from src.chat_store import (
     delete_session, save_messages, get_messages
 )
 
+from langchain_google_genai import ChatGoogleGenerativeAI
+from config import (
+    GOOGLE_API_KEY,
+    GEMINI_LLM_MODEL,
+    LLM_TEMPERATURE,
+    MAX_TOKENS_RESPONSE,
+)
+
 log = get_logger(__name__)
 
 def require_auth(f):
@@ -130,6 +138,115 @@ def create_app():
     def list_messages(session_id):
         messages = get_messages(session_id)
         return jsonify({"messages": messages})
+    
+    @app.route("/api/chat/stream", methods=["POST"])
+    @require_auth
+    def chat_stream():
+        retriever = app.config.get("RETRIEVER")
+
+        if retriever is None:
+            return jsonify({"error": "RAG pipeline not ready"}), 503
+
+        data = request.get_json(silent=True) or {}
+
+        question = (data.get("question") or "").strip()
+        session_id = (data.get("session_id") or data.get("sessionId") or "").strip()
+
+        if not question:
+            return jsonify({"error": "No question provided"}), 400
+
+        if not session_id:
+            return jsonify({"error": "No session_id provided"}), 400
+
+        if len(question) > 2000:
+            return jsonify({"error": "Question too long"}), 400
+
+        save_messages(session_id, "user", question)
+
+        sessions = get_sessions(request.user_id)
+        current = next((s for s in sessions if s["id"] == session_id), None)
+
+        if current and current["title"] == "New Chat":
+            title = question[:50] + ("..." if len(question) > 50 else "")
+            update_session_title(session_id, title)
+
+        def generate():
+            try:
+                # Retrieve relevant documents
+                docs = retriever.get_relevant_documents(question)
+
+                seen = set()
+                sources = []
+
+                for doc in docs:
+                    page = doc.metadata.get("page", "?")
+
+                    if page not in seen:
+                        seen.add(page)
+
+                        sources.append({
+                            "page": page,
+                            "preview": doc.page_content[:150].replace("\n", " ") + "...",
+                        })
+
+                context = "\n\n".join(doc.page_content for doc in docs)
+
+                prompt = PROMPT.format(
+                    context=context,
+                    question=question,
+                )
+
+                llm = ChatGoogleGenerativeAI(
+                    model=GEMINI_LLM_MODEL,      # gemini-3.5-flash
+                    google_api_key=GOOGLE_API_KEY,
+                    temperature=LLM_TEMPERATURE,
+                    max_output_tokens=MAX_TOKENS_RESPONSE,
+                )
+
+                full_answer = ""
+                start = time.time()
+
+                # Gemini streaming
+                for chunk in llm.stream(prompt):
+
+                    if chunk.content:
+                        full_answer += chunk.content
+
+                        yield (
+                            f"data: {json.dumps({'type':'token','content':chunk.content})}\n\n"
+                        )
+
+                duration_ms = round((time.time() - start) * 1000)
+
+                save_messages(
+                    session_id,
+                    "bot",
+                    full_answer,
+                    sources=sources,
+                    duration_ms=duration_ms,
+                )
+
+                yield (
+                    f"data: {json.dumps({'type':'sources','sources':sources})}\n\n"
+                )
+
+                yield f"data: {json.dumps({'type':'done'})}\n\n"
+
+            except Exception as e:
+                log.exception(e)
+
+                yield (
+                    f"data: {json.dumps({'type':'error','content':str(e)})}\n\n"
+                )
+
+        return Response(
+            stream_with_context(generate()),
+            mimetype="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "X-Accel-Buffering": "no",
+            },
+        )
 
     @app.errorhandler(404)
     def not_found(e):

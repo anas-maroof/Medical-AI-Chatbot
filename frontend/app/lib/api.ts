@@ -13,7 +13,7 @@ export interface ChatMessage {
     role:"user" | "bot";
     content:string;
     sources?:Source[];
-    duration_ms:number;
+    duration_ms?:number;
 }
 
 export interface Session {
@@ -96,5 +96,51 @@ export async function checkHealth(): Promise<boolean> {
     } catch {
         return false;
     }
+}
+
+export async function streamMessage(
+  question: string,
+  sessionId: string,
+  onToken: (token: string) => void,
+  onSources: (sources: Source[]) => void,
+  onDone: () => void,
+  onError: (err: string) => void
+): Promise<void> {
+  const res = await fetch(`${BACKEND_URL}/api/chat/stream`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ question, sessionId: sessionId })
+  })
+
+  if (!res.ok) {
+    onError("Failed to connect to the server")
+    return
+  }
+
+  const reader = res?.body?.getReader();
+  const decoder = new TextDecoder();
+  if (!reader) {
+    onError("No response body");
+    return;
+  }
+
+  let buffer = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n\n");
+    buffer = lines.pop() || "";
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      try {
+        const data = JSON.parse(line.slice(6));
+        if (data.type == "token") onToken(data.content);
+        else if (data.type == "sources") onSources(data.sources);
+        else if (data.type == "done") onDone();
+        else if (data.type === "error") onError(data.content);
+      } catch {}
+    }
+  }
 }
 
